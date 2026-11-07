@@ -108,6 +108,7 @@ main { padding: 36px 40px 0; max-width: 1520px; margin: auto; }
 .little-leaf { position: absolute; top: 31px; right: 56px; color: #88a167; transform: rotate(35deg); }
 .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 23px 0 27px; }
 .stat-card { background: white; border: 1px solid var(--border); border-radius: 9px; padding: 19px 20px; }
+.stat-card:hover { border-color: var(--green); box-shadow: 0 4px 14px #28382d14; }
 .stat-label { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #87917d; font-size: 10px; }
 .stat-label svg { color: #95a67c; }
 .stat-card > strong { font-size: 28px; display: block; margin: 8px 0 5px; letter-spacing: -.8px; font-weight: 650; }
