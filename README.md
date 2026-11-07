@@ -31,7 +31,7 @@ edits, selected dates, and search filters are not persisted across reloads.
 
 ## Included
 
-- Light/dark mode follows the operating-system preference initially; the header
+- Light/dark mode defaults to light regardless of operating-system preference; the header
   toggle saves your selection. All pages, dropdowns, and dialogs share the theme.
 - The flag language dropdown supports English, French, German, Spanish, Italian,
   Dutch, Russian, Polish, Ukrainian, and Norwegian. Interface, meal content,
