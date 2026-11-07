@@ -1,5 +1,11 @@
 # Batch & Budget
 
+Batch & Budget helps people on a budget plan their weekly food spending and
+organize groceries and meal preparation. Its main focus is making batch cooking
+easy to plan: reuse ingredients across meals, prepare food in batches for several
+days, and build shopping lists around a weekly budget to reduce costs and
+repeated preparation.
+
 A standalone Next.js / React / TypeScript web app inspired by the Expo app in
 `..\diet`. It runs entirely without a backend. The original app is unchanged.
 `backend` is an empty placeholder for a future NestJS service.
