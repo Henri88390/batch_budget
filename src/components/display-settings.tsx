@@ -47,7 +47,7 @@ function updateDisplay(next: Partial<Pick<Display, "language" | "theme">>) {
 }
 
 const Context = createContext<Display>(server);
-const pageTitles: Record<string, string> = { "/": "Overview", "/meal-planner": "Meal calendar", "/menu": "Meal list", "/prep-sessions": "Prep sessions", "/shopping-list": "Shopping list", "/preferences": "Preferences" };
+const pageTitles: Record<string, string> = { "/": "Overview", "/meal-planner": "Meal calendar", "/menu": "Meal list", "/prep-sessions": "Prep sessions", "/shopping-list": "Shopping list", "/preferences": "Preferences", "/about": "About" };
 
 export function DisplayProvider({ children }: { children: ReactNode }) {
   const settings = useSyncExternalStore(subscribe, () => snapshot, () => server);

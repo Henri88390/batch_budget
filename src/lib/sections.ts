@@ -5,6 +5,7 @@ export const sectionPaths = {
   groceries: "/shopping-list",
   recipes: "/menu",
   preferences: "/preferences",
+  about: "/about",
 } as const;
 
 export type Section = keyof typeof sectionPaths;

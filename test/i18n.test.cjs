@@ -28,7 +28,7 @@ test("all ten languages have complete interface and food dictionaries", () => {
   }
   for (const language of languages) {
     assert.doesNotThrow(() => new Intl.DateTimeFormat(languageLocale(language.code)));
-    for (const text of ["Meal calendar", "Meal list", "Preferences", "Seasonings", "Switch to dark mode", "Switch to light mode"]) {
+    for (const text of ["About", ...Object.keys(messageTranslations).filter((key) => key.startsWith("Batch & Budget helps") || key.startsWith("Its main focus") || key.startsWith("Inspired by the original")), "Meal calendar", "Meal list", "Preferences", "Seasonings", "Switch to dark mode", "Switch to light mode"]) {
       const localized = translate(text, language.code);
       assert.ok(localized);
       if (language.code !== "en") assert.notEqual(localized, text, `${language.code}: ${text}`);

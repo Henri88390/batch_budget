@@ -30,6 +30,7 @@ Each section has a separate Next.js page and can be opened directly:
 - `/shopping-list` - groceries
 - `/menu` - meal list, grouped by recipe and planned dates
 - `/preferences` - planning settings and exclusions
+- `/about` - app purpose, weekly budgeting, and batch-cooking introduction
 
 Navigation uses browser history and supports back/forward, refresh, and opening
 links in new tabs. Saved planner data is shared across sections. Unsaved form

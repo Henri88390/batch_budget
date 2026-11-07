@@ -30,6 +30,7 @@ const navigation: { id: Section; label: string; icon: IconName }[] = [
   { id: "groceries", label: "Shopping list", icon: "cart" },
   { id: "recipes", label: "Meal list", icon: "book" },
   { id: "preferences", label: "Preferences", icon: "sliders" },
+  { id: "about", label: "About", icon: "leaf" },
 ];
 
 export function Planner({ section = "overview" }: { section?: Section }) {
@@ -105,6 +106,7 @@ function Workspace({ snapshot, section: tab }: { snapshot: ReturnType<typeof use
     groceries: ["Shopping list", "Combined ingredient quantities for the selected dates."],
     recipes: ["Meal list", "Planned meals grouped by recipe and date."],
     preferences: ["Preferences", "Food preferences, portion targets, and weekly budget."],
+    about: ["About", ""],
   };
   const title = pageTitles[tab];
   return <Localize><div className="app-shell">
@@ -124,6 +126,12 @@ function Workspace({ snapshot, section: tab }: { snapshot: ReturnType<typeof use
         {plan.budget.status === "compromised" && <p className="notice budget-notice" role="status"><strong>Your budget needed a few adjustments.</strong> Applied compromises: {plan.budget.sacrificed.join(", ")}. Your original preferences are kept in Settings; the adjusted plan is shown below.</p>}
         {plan.budget.status === "impossible" && <p className="notice danger" role="alert"><strong>This budget cannot be met by the modeled plan.</strong> The lowest estimate found is {money(weeklyCost)} / week against {money(plan.budget.budget)}. Consider a higher budget or review preferences. Calorie targets have not been reduced.</p>}
         {plan.days.some((day) => day.meals.some((meal) => meal.banConflicts?.length)) && <p className="notice danger" role="alert">Some excluded ingredients have no suitable substitute. Open meal details to review conflicts; do not rely on this planner for allergies.</p>}
+        {tab === "about" && <section className="panel about-content">
+          <h2 translate="no">Batch &amp; Budget</h2>
+          <p>Batch &amp; Budget helps people on a budget plan their weekly food spending and organize groceries and meal preparation.</p>
+          <p>Its main focus is making batch cooking easy to plan: reuse ingredients across meals, prepare food in batches for several days, and build shopping lists around a weekly budget to reduce costs and repeated preparation.</p>
+          <p>Inspired by the original Meal Planner app, it brings meal planning, batch preparation, and grocery shopping together in a standalone web app. It currently runs without a backend, with planner data saved on your device.</p>
+        </section>}
         {tab === "overview" && <>
           <div className="stats-grid"><Stat section="groceries" icon="cart" label="Weekly food cost estimate" value={money(weeklyCost)} note="Next 7 days / portion costs" /><Stat section="preferences" icon="sliders" label="Weekly budget" value={plan.budget.status === "off" ? "Turned off" : money(plan.budget.budget)} note={plan.budget.status === "off" ? "Set a target in Preferences" : "Per week"} warning={weeklyCost > plan.budget.budget && plan.budget.status !== "off"} /><Stat section="prep" icon="pot" label="Prep sessions" value={String(plan.batches.length)} note={`${data.cooked.filter((key) => plan.batches.some((batch) => batch.startDate === key)).length} complete / 31-day plan`} /><Stat section="planner" icon="leaf" label="Today's portions" value={`${getDailyCalories(plan.days[0].meals).toLocaleString(locale)} kcal`} note={`${getDailyProtein(plan.days[0].meals)} g protein`} /></div>
           <div className="overview-grid"><section className="panel"><div className="section-heading"><div><span className="eyebrow">DAILY PLAN</span><h2>Today&apos;s meals</h2></div><button className="text-button" onClick={() => { setSelectedDate(today); setWeek(0); setTab("planner"); }}>View plan <Icon name="arrow" size={15} /></button></div><div className="today-meals">{getMealsInDisplayOrder(plan.days[0].meals).map((meal) => <button className="today-meal" key={meal.id} onClick={() => setSelectedMeal(meal)}><span className={`meal-thumbnail ${meal.type.toLowerCase()}`}>{meal.emoji}</span><span><small><MealTypeIcon meal={meal} /></small><strong>{meal.title}</strong><span className="muted small">{meal.calories} kcal {meal.batch ? "/ batch prepared" : ""}</span></span><span className="today-meal-price">{money(meal.estimatedCostCents)}<Icon name="arrow" size={16} /></span></button>)}</div></section>
