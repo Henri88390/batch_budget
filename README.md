@@ -29,6 +29,57 @@ Navigation uses browser history and supports back/forward, refresh, and opening
 links in new tabs. Saved planner data is shared across sections. Unsaved form
 edits, selected dates, and search filters are not persisted across reloads.
 
+## Screenshots
+
+Examples use English with France/EUR and sample planning data.
+
+### Overview
+
+Weekly estimated costs, budget, preparation progress, and today's meals.
+The four summary cards link to their corresponding pages.
+
+![Overview with budget summaries and today's meals](docs/screenshots/overview.png)
+
+### Meal calendar
+
+Browse dates and adjust daily calorie targets.
+
+![Meal calendar with daily portions and illustrated meals](docs/screenshots/meal-calendar.png)
+
+### Prep sessions
+
+Whole-batch costs, ingredient quantities, expandable seasonings, and prep checklists.
+
+![Prep sessions with expanded seasoning quantities](docs/screenshots/prep-sessions.png)
+
+### Shopping list
+
+Date-based ingredient totals, estimated costs, and shopping checkboxes.
+
+![Shopping list grouped by ingredient category](docs/screenshots/shopping-list.png)
+
+### Meal list and details
+
+Search planned meals, see their dates, and open a meal's ingredients and actions.
+
+![Searchable meal list with illustrations and occurrence dates](docs/screenshots/meal-list.png)
+
+![Meal details with ingredient quantities, costs, and recipe actions](docs/screenshots/meal-details.png)
+
+### Preferences and languages
+
+Budget and calorie controls, food preferences, ingredient exclusions, and recipe exclusions.
+
+![Planning preferences and searchable exclusions](docs/screenshots/preferences.png)
+
+![Language dropdown with flags for all ten supported languages](docs/screenshots/language-selection.png)
+
+### Dark mode
+
+The header theme toggle changes the appearance across all pages and dialogs.
+
+![Meal list in dark mode](docs/screenshots/dark-mode.png)
+
 ## Included
 
 - Light/dark mode defaults to light regardless of operating-system preference; the header
