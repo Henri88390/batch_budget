@@ -11,7 +11,6 @@ type Display = { language: Language; theme: Theme; error: string | null };
 const server: Display = { language: "en", theme: "light", error: null };
 let snapshot = server;
 let initialized = false;
-let explicitTheme = false;
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((listener) => listener());
 
@@ -19,8 +18,7 @@ function subscribe(listener: () => void) {
   listeners.add(listener);
   if (!initialized) {
     initialized = true;
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    snapshot = { language: browserLanguage(navigator.languages), theme: media.matches ? "dark" : "light", error: null };
+    snapshot = { language: browserLanguage(navigator.languages), theme: "light", error: null };
     try {
       const raw = localStorage.getItem(key);
       if (raw) {
@@ -30,23 +28,15 @@ function subscribe(listener: () => void) {
           throw new Error("Invalid display settings.");
         }
         snapshot = { language: saved.language, theme: saved.theme, error: null };
-        explicitTheme = true;
       }
     } catch (cause) {
       snapshot = { ...snapshot, error: `Could not restore display settings: ${cause instanceof Error ? cause.message : "browser storage is unavailable"}` };
     }
-    media.addEventListener("change", (event) => {
-      if (!explicitTheme) {
-        snapshot = { ...snapshot, theme: event.matches ? "dark" : "light" };
-        emit();
-      }
-    });
   }
   return () => { listeners.delete(listener); };
 }
 
 function updateDisplay(next: Partial<Pick<Display, "language" | "theme">>) {
-  if (next.theme) explicitTheme = true;
   snapshot = { ...snapshot, ...next, error: null };
   try {
     localStorage.setItem(key, JSON.stringify({ language: snapshot.language, theme: snapshot.theme }));
