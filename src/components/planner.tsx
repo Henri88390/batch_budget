@@ -110,7 +110,7 @@ function Workspace({ snapshot, section: tab }: { snapshot: ReturnType<typeof use
   const title = pageTitles[tab];
   return <Localize><div className="app-shell">
     <aside className="sidebar">
-      <Link href={sectionPaths.overview} className="brand"><span className="brand-icon"><Icon name="leaf" size={25} /></span><span><span translate="no">Batch <span className="brand-amp">&</span> Budget</span><small>BATCH COOKING & MEAL PLANNING</small></span></Link>
+      <Link href={sectionPaths.overview} className="brand"><span className="brand-icon"><Icon name="leaf" size={25} /></span><span translate="no">Batch <span className="brand-amp">&</span> Budget</span></Link>
       <nav aria-label="Main navigation">{navigation.map((item) => <Link key={item.id} href={sectionPaths[item.id]} className={`nav-item ${tab === item.id ? "active" : ""}`} aria-current={tab === item.id ? "page" : undefined}><Icon name={item.icon} /><span>{item.label}</span>{item.id === "prep" && <span className="nav-count">{plan.batches.length}</span>}</Link>)}</nav>
       <div className="sidebar-note"><Icon name="pot" size={26} /><h3>Batch cooking</h3><p>Lunches and dinners share prepared ingredients across 3-4 days.</p><span className="pill">31-day plan</span></div>
     </aside>
