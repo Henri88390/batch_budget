@@ -10,7 +10,7 @@ import { getMenuMealGroupKey } from "@/lib/domain/menuGrouping";
 import { getIngredientCategory } from "@/lib/domain/ingredientEstimates";
 import type { Meal } from "@/lib/domain/models";
 import { getDailyCalories, getDailyProtein, getMealsInDisplayOrder } from "@/lib/domain/sampleData";
-import { addDays, buildPlan, dateLabel, localDate } from "@/lib/plan";
+import { addDays, buildPlan, dateLabel as formatDate, localDate } from "@/lib/plan";
 import { updatePlanner, usePlannerStore } from "@/lib/store";
 import { defaultState } from "@/lib/storage";
 import { Icon, type IconName } from "./icons";
@@ -21,6 +21,7 @@ import { SectionHelp } from "./section-help";
 import { Dropdown } from "./dropdown";
 import { MealTypeIcon } from "./meal-type-icon";
 import { RecipeDates } from "./recipe-dates";
+import { DisplayControls, Localize, useI18n } from "./display-settings";
 
 const navigation: { id: Section; label: string; icon: IconName }[] = [
   { id: "overview", label: "Overview", icon: "grid" },
@@ -33,12 +34,14 @@ const navigation: { id: Section; label: string; icon: IconName }[] = [
 
 export function Planner({ section = "overview" }: { section?: Section }) {
   const snapshot = usePlannerStore();
-  if (!snapshot.ready) return <div className="loading"><div className="brand"><Icon name="leaf" size={28} />Batch & Budget</div><p>Loading planner...</p></div>;
+  if (!snapshot.ready) return <Localize><div className="loading"><div className="brand"><Icon name="leaf" size={28} />Batch & Budget</div><p>Loading planner...</p></div></Localize>;
   return <Workspace snapshot={snapshot} section={section} />;
 }
 
 function Workspace({ snapshot, section: tab }: { snapshot: ReturnType<typeof usePlannerStore>; section: Section }) {
   const { data, today } = snapshot;
+  const { t, locale } = useI18n();
+  const dateLabel = (key: string, options?: Intl.DateTimeFormatOptions) => formatDate(key, options, locale);
   const router = useRouter();
   function setTab(section: Section) {
     router.push(sectionPaths[section]);
@@ -51,8 +54,10 @@ function Workspace({ snapshot, section: tab }: { snapshot: ReturnType<typeof use
   const [recipeSearch, setRecipeSearch] = useState("");
   const [resetOpen, setResetOpen] = useState(false);
   const [goalError, setGoalError] = useState("");
-  const country = getCountry(data.country);
-  const money = (amount: number) => formatMoney({ amountMinorUnits: amount, currencyCode: country.currencyCode }, "en-GB");
+  const countryNames = new Intl.DisplayNames([locale], { type: "region" });
+  const selectedCountry = getCountry(data.country);
+  const country = { ...selectedCountry, name: countryNames.of(data.country) ?? selectedCountry.name };
+  const money = (amount: number) => formatMoney({ amountMinorUnits: amount, currencyCode: country.currencyCode }, locale);
   const plan = useMemo(() => buildPlan(today, data.preferences, data.goals, data.country), [today, data.preferences, data.goals, data.country]);
   const day = plan.days.find((day) => day.key === selectedDate) ?? plan.days[0];
   const currentWeek = plan.days.slice(week * 7, week * 7 + 7);
@@ -79,12 +84,14 @@ function Workspace({ snapshot, section: tab }: { snapshot: ReturnType<typeof use
     }));
     return [...groups.entries()];
   }, [plan.days]);
+  const matchesRecipe = (meal: Meal) =>
+    `${t(meal.title)} ${t(meal.description)} ${meal.title} ${meal.description}`.toLocaleLowerCase(locale).includes(recipeSearch.toLocaleLowerCase(locale));
   function toggleCooked(key: string) {
     updatePlanner((previous) => ({ ...previous, cooked: previous.cooked.includes(key) ? previous.cooked.filter((item) => item !== key) : [...previous.cooked, key] }));
   }
   function exportShopping() {
     if (!shopping) return;
-    const text = [`Batch & Budget / ${shopping.startDate} - ${shopping.endDate}`, "Illustrative portion costs, not checkout prices.", "", ...shopping.items.map((item) => `${data.checked.includes(checkedKey(item.key)) ? "[x]" : "[ ]"} ${item.name}: ${formatShoppingQuantity(item.quantity, item.unit, "en-GB")} - ${money(item.estimatedCost.amountMinorUnits)}`), "", `Estimated total: ${money(shopping.estimatedTotal.amountMinorUnits)}`].join("\n");
+    const text = [`Batch & Budget / ${shopping.startDate} - ${shopping.endDate}`, t("Illustrative portion costs, not checkout prices."), "", ...shopping.items.map((item) => `${data.checked.includes(checkedKey(item.key)) ? "[x]" : "[ ]"} ${t(item.name)}: ${t(formatShoppingQuantity(item.quantity, item.unit, locale))} - ${money(item.estimatedCost.amountMinorUnits)}`), "", `${t("Estimated total:")} ${money(shopping.estimatedTotal.amountMinorUnits)}`].join("\n");
     const url = URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }));
     const link = document.createElement("a");
     link.href = url;
@@ -101,17 +108,17 @@ function Workspace({ snapshot, section: tab }: { snapshot: ReturnType<typeof use
     preferences: ["Preferences", "Food preferences, portion targets, and weekly budget."],
   };
   const title = pageTitles[tab];
-  return <div className="app-shell">
+  return <Localize><div className="app-shell">
     <aside className="sidebar">
-      <Link href={sectionPaths.overview} className="brand"><span className="brand-icon"><Icon name="leaf" size={25} /></span><span>Batch <span className="brand-amp">&</span> Budget<small>BATCH COOKING & MEAL PLANNING</small></span></Link>
+      <Link href={sectionPaths.overview} className="brand"><span className="brand-icon"><Icon name="leaf" size={25} /></span><span><span translate="no">Batch <span className="brand-amp">&</span> Budget</span><small>BATCH COOKING & MEAL PLANNING</small></span></Link>
       <nav aria-label="Main navigation">{navigation.map((item) => <Link key={item.id} href={sectionPaths[item.id]} className={`nav-item ${tab === item.id ? "active" : ""}`} aria-current={tab === item.id ? "page" : undefined}><Icon name={item.icon} /><span>{item.label}</span>{item.id === "prep" && <span className="nav-count">{plan.batches.length}</span>}</Link>)}</nav>
       <div className="sidebar-note"><Icon name="pot" size={26} /><h3>Batch cooking</h3><p>Lunches and dinners share prepared ingredients across 3-4 days.</p><span className="pill">31-day plan</span></div>
     </aside>
     <div className="main-shell">
-      <header className="topbar"><span>{tab !== "overview" && <><Link className="breadcrumb" href="/">Overview</Link><span className="breadcrumb-divider">/</span></>}{navigation.find((item) => item.id === tab)?.label}</span><div className="topbar-right"><label className="country-select"><span className="sr-only">Price country</span><Dropdown label="Price country" value={data.country} title="Changing country does not convert your numeric budget target." onChange={(value) => {
+      <header className="topbar"><span>{tab !== "overview" && navigation.find((item) => item.id === tab)?.label}</span><div className="topbar-right"><label className="country-select"><span className="sr-only">Price country</span><Dropdown label="Price country" value={data.country} title="Changing country does not convert your numeric budget target." onChange={(value) => {
         const next = countries.find((country) => country.code === value);
         if (next) updatePlanner((previous) => ({ ...previous, country: next.code, checked: [], cooked: [] }));
-      }} options={countries.map((country) => ({ value: country.code, label: `${country.name} / ${country.currencyCode}` }))} /></label><button type="button" className="connect-button" aria-label="Connect" title="Connect"><Icon name="user" size={22} /></button></div></header>
+      }} options={countries.map((country) => ({ value: country.code, label: `${countryNames.of(country.code) ?? country.name} / ${country.currencyCode}` }))} /></label><DisplayControls /><button type="button" className="connect-button" aria-label="Connect" title="Connect"><Icon name="user" size={22} /></button></div></header>
       <main id="main-content">
         <div className="page-heading"><div><span className="eyebrow">{dateLabel(today, { weekday: "long", day: "numeric", month: "long" }).toUpperCase()}</span><div className="page-title-line"><h1>{title[0]}</h1>{tab === "prep" && <SectionHelp label="Preparation information"><strong>Preparation quantities only; cooking instructions are not included.</strong>{" "}Totals are raw ingredient amounts to prepare for each batch. Follow safe cooking and cooling practices; refrigerate promptly and freeze portions that will not be eaten safely within 3-4 days. Rice may require a shorter refrigerated storage time.</SectionHelp>}{tab === "planner" && <SectionHelp label="Meal planner information">{title[1]}</SectionHelp>}</div>{tab !== "planner" && <p>{title[1]}</p>}</div>{tab !== "preferences" && <button className="button" onClick={() => setTab("preferences")}><Icon name="sliders" size={17} />Adjust preferences</button>}</div>
         {snapshot.error && <p role="alert" className="notice danger">{snapshot.error}</p>}
@@ -119,7 +126,7 @@ function Workspace({ snapshot, section: tab }: { snapshot: ReturnType<typeof use
         {plan.budget.status === "impossible" && <p className="notice danger" role="alert"><strong>This budget cannot be met by the modeled plan.</strong> The lowest estimate found is {money(weeklyCost)} / week against {money(plan.budget.budget)}. Consider a higher budget or review preferences. Calorie targets have not been reduced.</p>}
         {plan.days.some((day) => day.meals.some((meal) => meal.banConflicts?.length)) && <p className="notice danger" role="alert">Some excluded ingredients have no suitable substitute. Open meal details to review conflicts; do not rely on this planner for allergies.</p>}
         {tab === "overview" && <>
-          <div className="stats-grid"><Stat icon="cart" label="Weekly food estimate" value={money(weeklyCost)} note="Next 7 days / portion costs" /><Stat icon="sliders" label={plan.budget.status === "off" ? "Budget fitting" : remaining < 0 ? "Over your weekly target" : "Left in your weekly target"} value={plan.budget.status === "off" ? "Turned off" : money(Math.abs(remaining))} note={plan.budget.status === "off" ? "Set a target in Preferences" : `Target: ${money(plan.budget.budget)} / week`} warning={remaining < 0 && plan.budget.status !== "off"} /><Stat icon="pot" label="Prep sessions" value={String(plan.batches.length)} note={`${data.cooked.filter((key) => plan.batches.some((batch) => batch.startDate === key)).length} complete / 31-day plan`} /><Stat icon="leaf" label="Today's portions" value={`${getDailyCalories(plan.days[0].meals).toLocaleString("en-GB")} kcal`} note={`${getDailyProtein(plan.days[0].meals)} g protein`} /></div>
+          <div className="stats-grid"><Stat icon="cart" label="Weekly food estimate" value={money(weeklyCost)} note="Next 7 days / portion costs" /><Stat icon="sliders" label={plan.budget.status === "off" ? "Budget fitting" : remaining < 0 ? "Over your weekly target" : "Left in your weekly target"} value={plan.budget.status === "off" ? "Turned off" : money(Math.abs(remaining))} note={plan.budget.status === "off" ? "Set a target in Preferences" : `Target: ${money(plan.budget.budget)} / week`} warning={remaining < 0 && plan.budget.status !== "off"} /><Stat icon="pot" label="Prep sessions" value={String(plan.batches.length)} note={`${data.cooked.filter((key) => plan.batches.some((batch) => batch.startDate === key)).length} complete / 31-day plan`} /><Stat icon="leaf" label="Today's portions" value={`${getDailyCalories(plan.days[0].meals).toLocaleString(locale)} kcal`} note={`${getDailyProtein(plan.days[0].meals)} g protein`} /></div>
           <div className="overview-grid"><section className="panel"><div className="section-heading"><div><span className="eyebrow">DAILY PLAN</span><h2>Today&apos;s meals</h2></div><button className="text-button" onClick={() => { setSelectedDate(today); setWeek(0); setTab("planner"); }}>View plan <Icon name="arrow" size={15} /></button></div><div className="today-meals">{getMealsInDisplayOrder(plan.days[0].meals).map((meal) => <button className="today-meal" key={meal.id} onClick={() => setSelectedMeal(meal)}><span className={`meal-thumbnail ${meal.type.toLowerCase()}`}>{meal.emoji}</span><span><small><MealTypeIcon meal={meal} /></small><strong>{meal.title}</strong><span className="muted small">{meal.calories} kcal {meal.batch ? "/ batch prepared" : ""}</span></span><span className="today-meal-price">{money(meal.estimatedCostCents)}<Icon name="arrow" size={16} /></span></button>)}</div></section>
             <section className="panel next-prep"><span className="eyebrow">PREPARATION</span><h2>{nextPrep ? "Next prep session" : "All prep sessions complete"}</h2>{nextPrep ? <><div className="prep-date"><Icon name="pot" size={30} /><div><strong>{dateLabel(nextPrep.startDate, { weekday: "long", month: "short", day: "numeric" })}</strong><span>{nextPrep.days} days / {nextPrep.portions} meal portions</span></div></div><div className="component-preview">{nextPrep.items.slice(0, 4).map((item) => <div key={item.name}><Icon name="check" size={15} />{item.name.replace(/, dry|, drained/g, "")}</div>)}</div><button className="button primary full-width" onClick={() => setTab("prep")}>View prep quantities <Icon name="arrow" size={17} /></button></> : <p className="muted">All sessions are marked as prepped. You can undo this in Prep sessions.</p>}<p className="small muted">Raw ingredient totals follow your calorie targets.</p></section></div>
         </>}
@@ -147,9 +154,9 @@ function Workspace({ snapshot, section: tab }: { snapshot: ReturnType<typeof use
             <h2>{dateLabel(batch.startDate, { weekday: "long", month: "short", day: "numeric" })}</h2>
             <p className="muted">{dateLabel(batch.startDate)} - {dateLabel(addDays(batch.startDate, batch.days - 1))} / {batch.portions} portions</p>
             <div className="batch-cost"><span>Estimated total cost for all {batch.portions} meals</span><strong>{money(batch.cost)}</strong></div>
-            {ingredients.map((item) => <div className="list-row" key={item.name}><span>{item.name}</span><strong>{formatShoppingQuantity(item.quantity, item.unit, "en-GB")}</strong></div>)}
+            {ingredients.map((item) => <div className="list-row" key={item.name}><span>{item.name}</span><strong>{formatShoppingQuantity(item.quantity, item.unit, locale)}</strong></div>)}
             {seasonings.length > 0 && <details className="prep-seasonings"><summary>Seasonings <Icon name="chevronDown" size={16} /></summary>
-              {seasonings.map((item) => <div className="list-row" key={item.name}><span>{item.name}</span><strong>{formatShoppingQuantity(item.quantity, item.unit, "en-GB")}</strong></div>)}
+              {seasonings.map((item) => <div className="list-row" key={item.name}><span>{item.name}</span><strong>{formatShoppingQuantity(item.quantity, item.unit, locale)}</strong></div>)}
             </details>}
             <button className={`button full-width ${cooked ? "" : "primary"}`} aria-pressed={cooked} onClick={() => toggleCooked(batch.startDate)}><Icon name="check" size={17} />{cooked ? "Prepped - undo" : "Mark as prepped"}</button>
           </section>;
@@ -159,22 +166,22 @@ function Workspace({ snapshot, section: tab }: { snapshot: ReturnType<typeof use
           {!validRange && <p className="notice danger" role="alert">Choose an end date on or after the start date, within the next 90 days.</p>}
           {shopping && <div className="shopping-grid"><section className="panel shopping-list"><div className="section-heading"><div><span className="eyebrow">SHOPPING LIST</span><h2>{shopping.items.length} ingredients</h2></div><span className="pill">{checkedCount} / {shopping.items.length} checked</span></div>{[...new Set(shopping.items.map((item) => getShoppingCategory(item.name)))].map((category) => <div className="shopping-category" key={category}><h3>{category}</h3>{shopping.items.filter((item) => getShoppingCategory(item.name) === category).map((item) => {
             const checked = data.checked.includes(checkedKey(item.key));
-            return <label className={`shopping-row ${checked ? "checked" : ""}`} key={item.key}><input type="checkbox" checked={checked} onChange={() => updatePlanner((previous) => ({ ...previous, checked: checked ? previous.checked.filter((key) => key !== checkedKey(item.key)) : [...previous.checked, checkedKey(item.key)] }))} /><span className="shopping-name">{item.name}<small>{formatShoppingQuantity(item.quantity, item.unit, "en-GB")}</small></span><strong>{money(item.estimatedCost.amountMinorUnits)}</strong></label>;
+            return <label className={`shopping-row ${checked ? "checked" : ""}`} key={item.key}><input type="checkbox" checked={checked} onChange={() => updatePlanner((previous) => ({ ...previous, checked: checked ? previous.checked.filter((key) => key !== checkedKey(item.key)) : [...previous.checked, checkedKey(item.key)] }))} /><span className="shopping-name">{item.name}<small>{formatShoppingQuantity(item.quantity, item.unit, locale)}</small></span><strong>{money(item.estimatedCost.amountMinorUnits)}</strong></label>;
           })}</div>)}</section><aside className="panel shopping-summary"><span className="eyebrow">COST SUMMARY</span><h2>Estimated ingredient cost</h2><span className="basket-total">{money(shopping.estimatedTotal.amountMinorUnits)}</span><p className="muted">{dateLabel(start)} - {dateLabel(end)}<br />{country.name} / {country.currencyCode}</p><div className="form-divider" /><div className="list-row"><span>Ingredients</span><strong>{shopping.items.length}</strong></div><div className="list-row"><span>Checked off</span><strong>{checkedCount}</strong></div><p className="notice small">These are synthetic portion costs, not the price of buying whole packages. No retailer data, offers, or live country prices are used.</p><button className="button full-width" disabled={!checkedCount} onClick={() => updatePlanner((previous) => ({ ...previous, checked: previous.checked.filter((key) => !shopping.items.some((item) => checkedKey(item.key) === key)) }))}>Uncheck this list</button></aside></div>}
         </>}
-        {tab === "recipes" && <><div className="panel recipe-search"><label>Find a meal in your plan<input type="search" placeholder="Search meals or ingredients..." value={recipeSearch} onChange={(event) => setRecipeSearch(event.target.value)} /></label></div><div className="meal-grid">{groups.filter(([, group]) => `${group.meal.title} ${group.meal.description}`.toLowerCase().includes(recipeSearch.toLowerCase())).map(([key, group], index) => <div key={key}><MealCard meal={group.meal} money={money} index={index} onClick={() => setSelectedMeal(group.meal)} /><RecipeDates dates={group.dates} title={group.meal.title} /></div>)}</div>{!groups.some(([, group]) => `${group.meal.title} ${group.meal.description}`.toLowerCase().includes(recipeSearch.toLowerCase())) && <p className="notice">No meals match that search.</p>}</>}
+        {tab === "recipes" && <><div className="panel recipe-search"><label>Find a meal in your plan<input type="search" placeholder="Search meals or ingredients..." value={recipeSearch} onChange={(event) => setRecipeSearch(event.target.value)} /></label></div><div className="meal-grid">{groups.filter(([, group]) => matchesRecipe(group.meal)).map(([key, group], index) => <div key={key}><MealCard meal={group.meal} money={money} index={index} onClick={() => setSelectedMeal(group.meal)} /><RecipeDates dates={group.dates} title={group.meal.title} /></div>)}</div>{!groups.some(([, group]) => matchesRecipe(group.meal)) && <p className="notice">No meals match that search.</p>}</>}
         {tab === "preferences" && <><Preferences data={data} dateKeys={plan.days.map((day) => day.key)} /><section className="panel reset-panel"><div><h3>Reset planner data</h3><p className="muted small">Reset your locally saved preferences, portions, exclusions, and checklists.</p></div>{resetOpen ? <div className="button-row"><span className="small">Clear all local planner data?</span><button className="button danger-button" onClick={() => { updatePlanner(() => defaultState(navigator.languages.length ? navigator.languages : [navigator.language])); setResetOpen(false); setTab("overview"); }}>Yes, reset</button><button className="button" onClick={() => setResetOpen(false)}>Cancel</button></div> : <button className="button" onClick={() => setResetOpen(true)}>Reset planner</button>}</section></>}
         <footer className="app-footer"><span>Batch & Budget</span><span>Sample nutrition & synthetic prices. Not medical advice or verified retailer data.</span></footer>
       </main>
     </div>
     {selectedMeal && <MealDialog key={selectedMeal.occurrenceKey ?? selectedMeal.id} meal={selectedMeal} data={data} days={plan.days} onClose={() => setSelectedMeal(null)} />}
-  </div>;
+  </div></Localize>;
 }
 
 function Stat({ icon, label, value, note, warning = false }: { icon: IconName; label: string; value: string; note: string; warning?: boolean }) {
-  return <section className={`stat-card ${warning ? "warning" : ""}`}><div className="stat-label"><span>{label}</span><Icon name={icon} size={19} /></div><strong>{value}</strong><span className="small muted">{note}</span></section>;
+  return <Localize><section className={`stat-card ${warning ? "warning" : ""}`}><div className="stat-label"><span>{label}</span><Icon name={icon} size={19} /></div><strong>{value}</strong><span className="small muted">{note}</span></section></Localize>;
 }
 
 function MealCard({ meal, money, index, onClick }: { meal: Meal; money: (value: number) => string; index: number; onClick: () => void }) {
-  return <button className="meal-card" onClick={onClick}><div className={`meal-card-art art-${index % 3}`}><MealArt meal={meal} /><span className="meal-type"><MealTypeIcon meal={meal} /></span>{meal.batch && <span className="batch-tag"><Icon name="pot" size={13} />Batch</span>}</div><div className="meal-card-body"><h3>{meal.title}</h3><p>{meal.description}</p><div className="meal-card-meta"><span>{meal.calories} kcal</span><strong>{money(meal.estimatedCostCents)}</strong></div>{meal.banConflicts?.length ? <span className="conflict-label">Ingredient conflict - review details</span> : null}</div></button>;
+  return <Localize><button className="meal-card" onClick={onClick}><div className={`meal-card-art art-${index % 3}`}><MealArt meal={meal} /><span className="meal-type"><MealTypeIcon meal={meal} /></span>{meal.batch && <span className="batch-tag"><Icon name="pot" size={13} />Batch</span>}</div><div className="meal-card-body"><h3>{meal.title}</h3><p>{meal.description}</p><div className="meal-card-meta"><span>{meal.calories} kcal</span><strong>{money(meal.estimatedCostCents)}</strong></div>{meal.banConflicts?.length ? <span className="conflict-label">Ingredient conflict - review details</span> : null}</div></button></Localize>;
 }

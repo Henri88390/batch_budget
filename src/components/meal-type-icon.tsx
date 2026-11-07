@@ -1,7 +1,11 @@
+"use client";
+
 import type { Meal } from "@/lib/domain/models";
+import { useI18n } from "./display-settings";
 
 export function MealTypeIcon({ meal }: { meal: Pick<Meal, "type" | "slot"> }) {
-  const label = meal.slot ? `${meal.type} / ${meal.slot}` : meal.type;
+  const { t } = useI18n();
+  const label = t(meal.slot ? `${meal.type} / ${meal.slot}` : meal.type);
   return <span className="meal-type-icon" role="img" aria-label={label} title={label}>
     <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
       {meal.type === "Breakfast" ? <>

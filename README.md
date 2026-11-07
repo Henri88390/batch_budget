@@ -31,6 +31,14 @@ edits, selected dates, and search filters are not persisted across reloads.
 
 ## Included
 
+- Light/dark mode follows the operating-system preference initially; the header
+  toggle saves your selection. All pages, dropdowns, and dialogs share the theme.
+- The flag language dropdown supports English, French, German, Spanish, Italian,
+  Dutch, Russian, Polish, Ukrainian, and Norwegian. Interface, meal content,
+  ingredients, messages, dates, and downloaded shopping lists are localized.
+  It starts from browser language preferences and saves your selection separately
+  from planner data. Language changes do not change country, currency, quantities,
+  calorie targets, exclusions, or recipe identities.
 - Responsive overview, 31-day meal planner, grouped meal list, batch-prep sessions,
   shopping list, and preferences.
 - Meal cards and details use local SVG illustrations selected from the meal
@@ -92,6 +100,10 @@ batch boundaries, budget fitting, and calendar/prep generation.
 `src/lib/storage.ts` validates versioned local data; `src/lib/store.ts` owns
 browser persistence. React screens live in `src/components`; Next.js entry
 points are in `src/app`. There are no React Native or Expo dependencies.
+`src/lib/i18n` contains local translation dictionaries; `DisplayProvider` and
+`Localize` translate presentation without modifying canonical planning data.
+Add new English UI strings and food names to every dictionary language when
+extending the app. No external translation or location service is used.
 
 When adding NestJS later, replace local persistence and synthetic ingredient
 rates with explicit API contracts. Do not make the frontend depend on backend

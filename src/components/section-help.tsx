@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { Localize } from "./display-settings";
 
 export function SectionHelp({ label, children }: { label: string; children: ReactNode }) {
   const id = useId();
@@ -25,7 +26,7 @@ export function SectionHelp({ label, children }: { label: string; children: Reac
     };
   }, [open]);
 
-  return <span ref={ref} className="prep-help" onMouseEnter={() => setOpen(true)} onMouseLeave={() => { if (!pinned) setOpen(false); }}>
+  return <Localize><span ref={ref} className="prep-help" onMouseEnter={() => setOpen(true)} onMouseLeave={() => { if (!pinned) setOpen(false); }}>
     <button type="button" className="help-button" aria-label={label} aria-expanded={open} aria-controls={open ? id : undefined}
       aria-describedby={open ? id : undefined}
       onFocus={() => setOpen(true)} onBlur={() => { if (!pinned) setOpen(false); }}
@@ -33,5 +34,5 @@ export function SectionHelp({ label, children }: { label: string; children: Reac
     {open && <span id={id} role="tooltip" className="help-popover">
       {children}
     </span>}
-  </span>;
+  </span></Localize>;
 }

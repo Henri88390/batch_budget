@@ -12,6 +12,7 @@ import type { SavedState } from "@/lib/storage";
 import { Icon } from "./icons";
 import { Dropdown } from "./dropdown";
 import { getSafeRecipeAlternatives } from "@/lib/recipe-replacements";
+import { Localize, useI18n } from "./display-settings";
 
 function formSignature(preferences: MealPreferences, calories: string, breakfast: MealPreferences["typicalBreakfast"]) {
   return JSON.stringify({
@@ -26,6 +27,7 @@ function formSignature(preferences: MealPreferences, calories: string, breakfast
 }
 
 export function Preferences({ data, dateKeys }: { data: SavedState; dateKeys: string[] }) {
+  const { t } = useI18n();
   const [draft, setDraft] = useState(data.preferences);
   const [calories, setCalories] = useState(String(data.goals[dateKeys[0]] ?? 2000));
   const [breakfastMode, setBreakfastMode] = useState(data.preferences.typicalBreakfast.mode === "preset" ? data.preferences.typicalBreakfast.presetId : data.preferences.typicalBreakfast.mode);
@@ -108,8 +110,8 @@ export function Preferences({ data, dateKeys }: { data: SavedState; dateKeys: st
   }
   const catalog = getRecipeCatalog();
   const recipeMatches = catalog.filter((meal) => meal.type === "Breakfast" &&
-    `${meal.title} ${meal.description}`.toLowerCase().includes(recipeSearch.trim().toLowerCase()));
-  return <div className="preferences-grid">
+    `${t(meal.title)} ${t(meal.description)} ${meal.title} ${meal.description}`.toLowerCase().includes(recipeSearch.trim().toLowerCase()));
+  return <Localize><div className="preferences-grid">
     <form className="panel" onSubmit={save}>
       <div className="section-heading"><div><h2>Planning preferences</h2></div><Icon name="sliders" /></div>
       <div className="form-grid">
@@ -158,18 +160,18 @@ export function Preferences({ data, dateKeys }: { data: SavedState; dateKeys: st
     </form>
     <div className="stack">
       <section className="panel">
-        <h2>Ingredient exclusions</h2>
+        <h2>Excluded ingredients</h2>
         <input type="search" aria-label="Search ingredients" placeholder="Search ingredients..." value={search} onChange={(event) => setSearch(event.target.value)} />
         <div className="exclusions">
           {ingredientCategoryOrder.map((category) => {
-            const items = ingredientCatalog.filter((item) => item.category === category && item.name.toLowerCase().includes(search.toLowerCase()));
+            const items = ingredientCatalog.filter((item) => item.category === category && `${t(item.name)} ${item.name}`.toLowerCase().includes(search.toLowerCase()));
             if (!items.length) return null;
             const all = ingredientCatalog.filter((item) => item.category === category).every((item) => data.preferences.bannedIngredients.includes(item.id));
             return <div key={category}><div className="category-heading"><h3>{category}</h3><button type="button" className="text-button" aria-label={`${all ? "Restore" : "Exclude"} ${category} category`} title={all ? "Restore category" : "Exclude category"} onClick={() => updatePlanner((previous) => ({ ...previous, preferences: toggleIngredientCategoryBanPreference(previous.preferences, category), checked: [], cooked: [] }))}>{all ? "Restore category" : <Icon name="trash" size={17} />}</button></div>
               <div className="chip-list">{items.map((item) => <button type="button" className={`chip ${data.preferences.bannedIngredients.includes(item.id) ? "excluded" : ""}`} aria-pressed={data.preferences.bannedIngredients.includes(item.id)} key={item.id} onClick={() => updatePlanner((previous) => ({ ...previous, preferences: toggleIngredientBanPreference(previous.preferences, item.id), checked: [], cooked: [] }))}>{item.name}{data.preferences.bannedIngredients.includes(item.id) ? " - excluded" : ""}</button>)}</div>
             </div>;
           })}
-          {!ingredientCatalog.some((item) => item.name.toLowerCase().includes(search.toLowerCase())) && <p className="muted">No matching ingredients.</p>}
+          {!ingredientCatalog.some((item) => `${t(item.name)} ${item.name}`.toLowerCase().includes(search.toLowerCase())) && <p className="muted">No matching ingredients.</p>}
         </div>
       </section>
       <section className="panel"><h2>Excluded recipes</h2><p className="muted small">Search breakfast recipes to exclude them from the plan. Batch lunches and dinners are managed by their shared ingredients. Repeating breakfasts are managed above.</p>
@@ -191,5 +193,5 @@ export function Preferences({ data, dateKeys }: { data: SavedState; dateKeys: st
         {data.preferences.bannedMeals.map((key) => <div className="list-row" key={key}><span>{catalog.find((meal) => meal.recipeKey === key)?.title ?? key}</span><button className="text-button" onClick={() => updatePlanner((previous) => ({ ...previous, preferences: removeMealBan(previous.preferences, key), checked: [], cooked: [] }))}>Restore</button></div>)}
       </section>
     </div>
-  </div>;
+  </div></Localize>;
 }

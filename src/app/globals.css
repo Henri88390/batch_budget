@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   --background: #f7f8f3;
   --surface: #ffffff;
   --ink: #28382d;
@@ -7,6 +8,18 @@
   --light-green: #edf2e6;
   --border: #e7eae1;
   --orange: #bc7950;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #151c18;
+  --surface: #202a23;
+  --ink: #edf2e9;
+  --muted: #b0bcad;
+  --green: #a3c49b;
+  --light-green: #303f2f;
+  --border: #3b493e;
+  --orange: #e3a47e;
 }
 
 * { box-sizing: border-box; }
@@ -50,6 +63,14 @@ nav { display: flex; flex-direction: column; gap: 7px; margin-top: 32px; }
 .breadcrumb { color: #939b90; }
 .breadcrumb-divider { color: #bdc1b7; margin: 0 14px; }
 .topbar-right { display: flex; align-items: center; gap: 22px; }
+.topbar-right { gap: 12px; min-width: 0; }
+.language-select { width: 160px; min-width: 0; }
+.language-select .dropdown { margin: 0; }
+.language-select .dropdown-trigger { min-height: 36px; }
+.language-select .dropdown-list { min-width: 160px; }
+.dropdown-value { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.language-flag { border-radius: 2px; box-shadow: 0 0 0 1px #80808040; }
+.display-error { margin: 12px; }
 .connect-button { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; padding: 0; border: 1px solid #dce5d1; border-radius: 50%; background: #edf2e6; color: var(--green); }
 .connect-button:hover { background: #dfe8d5; }
 .local-tag { display: flex; align-items: center; gap: 7px; font-size: 10px; color: #91978a; }
@@ -240,6 +261,45 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--green); width:
 .prep-seasonings summary::-webkit-details-marker { display: none; }
 .prep-seasonings[open] summary svg { transform: rotate(180deg); }
 .prep-seasonings + .button { margin-top: 16px; }
+:root[data-theme="dark"] :is(.sidebar, .panel, .stat-card, .meal-card, .meal-dialog, .ingredient-confirmation, .help-popover, .dropdown-list) { background: var(--surface); color: var(--ink); border-color: var(--border); }
+:root[data-theme="dark"] .topbar { background: #1b241e; }
+:root[data-theme="dark"] :is(.button, .dropdown-trigger, input:not([type="checkbox"]):not([type="radio"]), select) { background: #19231c; border-color: var(--border); color: var(--ink); }
+:root[data-theme="dark"] :is(.nav-item, label, .shopping-row, .dropdown-option, .meal-card-meta, .stat-label, .breadcrumb, .eyebrow, .session-number, .app-footer, .component-preview, .scope legend) { color: var(--muted); }
+:root[data-theme="dark"] :is(.sidebar-note, .prep-date, .batch-cost, .prep-seasonings, .custom-breakfast, .empty-inline, .chip, .shopping-category h3, .date-button, .alternative, .close-button) { background: #28342b; color: var(--ink); border-color: var(--border); }
+:root[data-theme="dark"] :is(.sidebar-note p, .prep-date span, label small, .shopping-name small) { color: var(--muted); }
+:root[data-theme="dark"] :is(.nav-item.active, .nav-count, .pill, .recipe-date, .connect-button, .help-button, .dropdown-option[aria-selected="true"], .alternative.selected) { background: var(--light-green); color: var(--green); border-color: var(--border); }
+:root[data-theme="dark"] :is(.button:hover, .nav-item:hover, .dropdown-trigger:hover, .dropdown-option.highlighted, .alternative:hover, .help-button:hover, .connect-button:hover, .number-field-controls button:hover:not(:disabled)) { background: #354737; color: var(--ink); }
+:root[data-theme="dark"] :is(.button.primary, .date-button.selected) { background: #446c4a; color: #fff; border-color: #6e966d; }
+:root[data-theme="dark"] :is(.button.primary:hover, .date-button.selected:hover) { background: #517e56; }
+:root[data-theme="dark"] :is(.date-button strong, .prep-date strong, .meal-card-meta strong, .today-meal-price) { color: var(--green); }
+:root[data-theme="dark"] :is(.notice, .prep-banner) { background: #2b3b2b; border-color: #486046; color: #c2d8b7; }
+:root[data-theme="dark"] :is(.notice.danger, .danger-button, .ingredient-trash-button, .confirmation-icon, .chip.excluded) { background: #422c25; border-color: #795143; color: #f3baa1; }
+:root[data-theme="dark"] :is(.danger-button:hover, .ingredient-trash-button:hover) { background: #573a2e; }
+:root[data-theme="dark"] .conflict-label { color: #f3baa1; }
+:root[data-theme="dark"] .stat-card.warning > strong { color: #f3baa1; }
+:root[data-theme="dark"] .dropdown-trigger[aria-expanded="true"] { box-shadow: 0 0 0 3px #354737; }
+:root[data-theme="dark"] .meal-card-art { background: #33442e; }
+:root[data-theme="dark"] .meal-card-art.art-1 { background: #493d30; }
+:root[data-theme="dark"] .meal-card-art.art-2 { background: #47452e; }
+:root[data-theme="dark"] .dialog-art { background: #33442e; }
+:root[data-theme="dark"] :is(.meal-type, .batch-tag) { background: #202a23e8; color: var(--green); }
+:root[data-theme="dark"] .meal-thumbnail { background: #493d30; }
+:root[data-theme="dark"] .meal-thumbnail.lunch { background: #33442e; }
+:root[data-theme="dark"] .meal-thumbnail.dinner { background: #48362c; }
+@media (max-width: 1100px) {
+  .topbar { flex-wrap: wrap; }
+  .topbar-right { margin-left: auto; }
+}
+@media (max-width: 700px) {
+  .topbar-right { width: 100%; flex-wrap: wrap; gap: 8px; }
+  .topbar-right .country-select { width: auto; min-width: 0; flex: 1 1 90px; }
+  .language-select { width: auto; flex: 1 1 90px; }
+  .theme-button, .connect-button { width: 36px; height: 36px; }
+}
+@media print {
+  :root[data-theme="dark"] { --ink: #28382d; --muted: #788078; --green: #3d624a; --border: #e7eae1; --surface: #fff; }
+  :root[data-theme="dark"] :is(.panel, .shopping-category h3, .shopping-row) { background: #fff; color: #28382d; }
+}
 .recipe-date-hidden { position: absolute; visibility: hidden; pointer-events: none; }
 .app-footer { display: flex; justify-content: space-between; gap: 20px; padding: 28px 0; margin-top: 25px; color: #a2aa98; font-size: 9px; border-top: 1px solid var(--border); }
 .app-footer > span:first-child { display: flex; gap: 7px; align-items: center; white-space: nowrap; }

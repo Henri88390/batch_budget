@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Icon } from "./icons";
+import { useI18n } from "./display-settings";
 
-type Option = { value: string; label: string };
+type Option = { value: string; label: string; icon?: ReactNode };
 
 export function Dropdown({ label, value, options, onChange, title }: {
   label: string;
@@ -13,6 +14,8 @@ export function Dropdown({ label, value, options, onChange, title }: {
   title?: string;
 }) {
   const id = useId();
+  const { t } = useI18n();
+  const translatedOptions = options.map((option) => ({ ...option, label: t(option.label) }));
   const ref = useRef<HTMLSpanElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
@@ -72,7 +75,7 @@ export function Dropdown({ label, value, options, onChange, title }: {
       const now = Date.now();
       const text = now - search.current.time > 700 ? key : search.current.text + key;
       search.current = { text, time: now };
-      const index = options.findIndex((option) => option.label.toLowerCase().startsWith(text.toLowerCase()));
+      const index = translatedOptions.findIndex((option) => option.label.toLowerCase().startsWith(text.toLowerCase()));
       if (index >= 0) { if (open) setActive(index); else show(index); }
     }
   }
@@ -80,20 +83,20 @@ export function Dropdown({ label, value, options, onChange, title }: {
   return <span className="dropdown" ref={ref} onBlur={(event) => {
     if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
   }}>
-    <button ref={trigger} type="button" role="combobox" className="dropdown-trigger" aria-label={label}
+    <button ref={trigger} type="button" role="combobox" className="dropdown-trigger" aria-label={t(label)}
       aria-expanded={open} aria-haspopup="listbox" aria-controls={open ? id : undefined}
-      aria-activedescendant={open ? `${id}-${active}` : undefined} title={title}
+      aria-activedescendant={open ? `${id}-${active}` : undefined} title={title ? t(title) : undefined}
       onClick={() => { if (open) setOpen(false); else show(); }} onKeyDown={keyDown}>
-      <span>{options[selected]?.label ?? options[0]?.label}</span>
+      <span className="dropdown-value">{translatedOptions[selected]?.icon ?? translatedOptions[0]?.icon}{translatedOptions[selected]?.label ?? translatedOptions[0]?.label}</span>
       <svg className={`dropdown-arrow ${open ? "open" : ""}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
     </button>
-    {open && <span id={id} role="listbox" aria-label={label} className={`dropdown-list ${above ? "above" : ""}`}
+    {open && <span id={id} role="listbox" aria-label={t(label)} className={`dropdown-list ${above ? "above" : ""}`}
       onMouseDown={(event) => event.preventDefault()}>
-      {options.map((option, index) => <span key={option.value} id={`${id}-${index}`} role="option"
+      {translatedOptions.map((option, index) => <span key={option.value} id={`${id}-${index}`} role="option"
         aria-selected={index === selected} data-option-index={index}
         className={`dropdown-option ${index === active ? "highlighted" : ""}`}
         onMouseEnter={() => setActive(index)} onClick={(event) => { event.preventDefault(); choose(index); }}>
-        <span>{option.label}</span>{index === selected && <Icon name="check" size={15} />}
+        <span className="dropdown-value">{option.icon}{option.label}</span>{index === selected && <Icon name="check" size={15} />}
       </span>)}
     </span>}
   </span>;

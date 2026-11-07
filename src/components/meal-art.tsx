@@ -1,10 +1,14 @@
+"use client";
+
 import type { Meal } from "@/lib/domain/models";
 import { getMealArt } from "@/lib/meal-art";
+import { useI18n } from "./display-settings";
 
 export function MealArt({ meal }: { meal: Meal }) {
+  const { t } = useI18n();
   const art = getMealArt(meal);
   const plate = ["pancakes", "toast", "wrap", "fruit"].includes(art.kind);
-  return <svg viewBox="0 0 320 190" className="bowl-art" role="img" aria-label={`Illustration of ${meal.title}`} data-meal-art={art.kind} data-base={art.base} data-protein={art.protein}>
+  return <svg viewBox="0 0 320 190" className="bowl-art" role="img" aria-label={t(`Illustration of ${meal.title}`)} data-meal-art={art.kind} data-base={art.base} data-protein={art.protein}>
     <ellipse cx="160" cy="157" rx="100" ry="13" fill="#343a2714" />
     {!plate && <path d="M48 86h224c-5 60-49 81-112 81S56 146 48 86" fill="#f8f5e9" />}
     <ellipse cx="160" cy={plate ? 112 : 86} rx="112" ry={plate ? 43 : 55} fill="#fffdf5" />

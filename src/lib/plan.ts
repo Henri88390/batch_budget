@@ -20,8 +20,8 @@ export function addDays(key: string, count: number): string {
   return formatDateKey(date);
 }
 
-export function dateLabel(key: string, options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" }): string {
-  return localDate(key).toLocaleDateString("en-GB", options);
+export function dateLabel(key: string, options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" }, locale = "en-GB"): string {
+  return localDate(key).toLocaleDateString(locale, options);
 }
 
 export function buildPlan(today: string, preferences: MealPreferences, goals: Record<string, number>, country: CountryCode) {
