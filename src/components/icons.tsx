@@ -1,4 +1,4 @@
-export type IconName = "grid" | "calendar" | "pot" | "cart" | "sliders" | "arrow" | "leaf" | "check" | "book" | "clock";
+export type IconName = "grid" | "calendar" | "pot" | "cart" | "sliders" | "arrow" | "arrowLeft" | "chevronUp" | "chevronDown" | "user" | "leaf" | "check" | "book" | "clock" | "trash" | "swap" | "sunrise" | "sun" | "moon" | "apple";
 
 const paths: Record<IconName, string> = {
   grid: "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z",
@@ -7,28 +7,22 @@ const paths: Record<IconName, string> = {
   cart: "M2 3h3l3 12h11l3-9H6 M9 20h.01 M18 20h.01 M8 15l-1 3h13",
   sliders: "M4 5h16 M4 12h16 M4 19h16 M9 3v4 M15 10v4 M8 17v4",
   arrow: "M5 12h14 M14 7l5 5-5 5",
+  arrowLeft: "M19 12H5 M10 7l-5 5 5 5",
+  chevronUp: "M6 15l6-6 6 6",
+  chevronDown: "M6 9l6 6 6-6",
+  user: "M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M4 21v-2a8 6 0 0 1 16 0v2",
   leaf: "M20 3C8 2 3 7 4 14c1 7 9 8 13 3 3-4 3-9 3-14z M5 19L16 8",
   check: "M5 12l4 4L19 6",
   book: "M12 6C8 3 4 3 2 4v16c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 2z M12 6v15",
   clock: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18 M12 7v5l3 2",
+  trash: "M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7",
+  swap: "M4 7h16 M16 3l4 4-4 4 M20 17H4 M8 13l-4 4 4 4",
+  sunrise: "M2 18h20 M4 21h16 M7 15a5 5 0 0 1 10 0 M12 2v4 M4 7l2 2 M20 7l-2 2 M2 14h2 M20 14h2",
+  sun: "M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10 M12 2v2 M12 20v2 M2 12h2 M20 12h2 M5 5l1.5 1.5 M17.5 17.5L19 19 M5 19l1.5-1.5 M17.5 6.5L19 5",
+  moon: "M20 15.5A9 9 0 0 1 8.5 4 9 9 0 1 0 20 15.5Z",
+  apple: "M12 7c-4-4-10-1-9 5s4 10 9 8c5 2 8-2 9-8s-5-9-9-5 M12 7V3 M12 4c1-3 4-3 6-2-1 3-4 4-6 2",
 };
 
 export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]} /></svg>;
-}
-
-export function BowlArt({ variant = 0 }: { variant?: number }) {
-  const colors = [["#d4df9f", "#b86d43", "#739b59"], ["#e5cc8a", "#9b5b36", "#79a173"], ["#ead2a6", "#b98848", "#638755"]][variant % 3];
-  return <svg viewBox="0 0 320 190" className="bowl-art" aria-hidden="true">
-    <ellipse cx="161" cy="159" rx="101" ry="15" fill="#343a2714" />
-    <path d="M48 87h224c-5 61-49 82-111 82S56 148 48 87" fill="#f8f5e9" />
-    <ellipse cx="160" cy="86" rx="112" ry="55" fill="#fffdf5" />
-    <ellipse cx="160" cy="86" rx="98" ry="44" fill={colors[0]} />
-    <path d="M67 87c16-36 57-41 74-14s-15 53-55 38z" fill={colors[2]} />
-    <path d="M149 46c29-8 76 11 78 33-7 23-52 14-72 4z" fill={colors[1]} />
-    {Array.from({ length: 13 }, (_, i) => <ellipse key={i} cx={145 + (i % 5) * 13} cy={93 + Math.floor(i / 5) * 9} rx="8" ry="4" fill="#fff2c9" transform={`rotate(${i * 11} ${145 + (i % 5) * 13} ${93 + Math.floor(i / 5) * 9})`} />)}
-    <circle cx="109" cy="74" r="9" fill="#d77853" /><circle cx="89" cy="99" r="8" fill="#d77853" />
-    <path d="M224 101l53-63 M232 108l52-62" stroke="#a89879" strokeWidth="6" strokeLinecap="round" />
-    <path d="M94 132c26 20 77 26 107 8" fill="none" stroke="#e8e4d4" strokeWidth="4" />
-  </svg>;
 }

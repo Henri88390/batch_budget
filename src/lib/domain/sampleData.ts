@@ -8,8 +8,7 @@ import type {
   IngredientCategoryGroup,
   MealType,
   RemovedBannedIngredient,
-  TypicalBreakfastIngredient,
-  WeeklyFrequency
+  TypicalBreakfastIngredient
 } from "./models";
 import {
   estimateIngredient,
@@ -18,7 +17,10 @@ import {
 } from "./ingredientEstimates";
 import { getIngredientCatalogId, ingredientCatalog, isIngredientBanned, isWholePieceIngredient } from "./ingredientCatalog";
 import { applyBatchCooking } from "./batchCooking";
+import { getWeeklyFoodMealType } from "./weeklyFoods";
+export { getWeeklyAssignmentDays } from "./weeklyFoods";
 import type { CountryCode } from "./countryPricing";
+import { DEFAULT_COUNTRY } from "./countryPricing";
 import { typicalBreakfastPresets } from "./typicalBreakfast";
 
 type IngredientTemplate = Omit<MealIngredient, "category" | "calories" | "proteinGrams" | "estimatedCostCents">;
@@ -473,34 +475,19 @@ export function getDayPlan(date: Date, preferences?: MealPreferences): DayPlan {
 }
 
 /**
- * Assign frequency choices to stable weekdays in each Monday-based calendar
- * week. A week always receives exactly the requested number of assigned days.
- */
-export function getWeeklyAssignmentDays(frequency: WeeklyFrequency): number[] {
-  const assignments: Record<WeeklyFrequency, number[]> = {
-    0: [],
-    1: [2],
-    2: [1, 4],
-    3: [0, 2, 4],
-    7: [0, 1, 2, 3, 4, 5, 6]
-  };
-  return [...assignments[frequency]];
-}
-
-/**
  * Produce a deterministic, personalized copy of a canonical sample day.
- * Weekly frequencies are expressed as days with the chosen food per week.
+ * Weekly frequencies count meals containing the chosen food.
  */
 export function getPersonalizedDayPlan(
   date: Date,
   preferences: MealPreferences,
-  countryCode: CountryCode = "DE",
+  countryCode: CountryCode = DEFAULT_COUNTRY,
   goal: number = DEFAULT_DAILY_CALORIE_GOAL
 ): DayPlan {
   const basePlan = getDayPlan(date, preferences);
   const weekday = (date.getDay() + 6) % 7;
-  const meatDay = getWeeklyAssignmentDays(preferences.meatPerWeek).includes(weekday);
-  const dairyDay = getWeeklyAssignmentDays(preferences.dairyPerWeek).includes(weekday);
+  const meatSlot = getWeeklyFoodMealType(weekday, preferences.meatPerWeek, preferences.mealsPerDay, "meat");
+  const dairySlot = getWeeklyFoodMealType(weekday, preferences.dairyPerWeek, preferences.mealsPerDay, "dairy");
   const meals = basePlan.meals.map((meal) => ({
     ...meal,
     ingredients: meal.ingredients.map((ingredient) => ({ ...ingredient }))
@@ -508,10 +495,10 @@ export function getPersonalizedDayPlan(
   const originalTitles = new Map(meals.map((meal) => [meal, meal.title]));
   meals.forEach((meal) => {
     meal.ingredients = meal.ingredients.map((ingredient) => {
-      if (isMeat(ingredient.name) && !(meatDay && meal.type === "Dinner")) {
+      if (isMeat(ingredient.name) && meal.type !== meatSlot) {
         return replaceIngredient(ingredient, plantProteinReplacement(ingredient.name));
       }
-      if (isDairy(ingredient.name) && !(dairyDay && meal.type === "Breakfast")) {
+      if (isDairy(ingredient.name) && meal.type !== dairySlot) {
         return replaceIngredient(ingredient, dairyAlternative(ingredient.name, meal.type));
       }
       if (preferences.fruitPreference === "avoid" && isFruit(ingredient.name)) {
@@ -522,8 +509,6 @@ export function getPersonalizedDayPlan(
     refreshMealCopy(meal, preferences.fruitPreference);
   });
 
-  if (meatDay) ensureDinnerMeat(meals, weekday);
-  if (dairyDay) ensureBreakfastDairy(meals);
 
   if (preferences.fruitPreference === "include" && preferences.typicalBreakfast.mode === "none") {
     const breakfast = meals.find((meal) => meal.type === "Breakfast");
@@ -575,6 +560,18 @@ export function getPersonalizedDayPlan(
 
   applyPlanStyle(meals, preferences, countryCode, date, goal);
   applyTypicalBreakfast(meals, preferences.typicalBreakfast);
+  meals.forEach((meal) => {
+    meal.ingredients = meal.ingredients.map((ingredient) =>
+      isMeat(ingredient.name) && meal.type !== meatSlot
+        ? replaceIngredient(ingredient, plantProteinReplacement(ingredient.name))
+        : isDairy(ingredient.name) && meal.type !== dairySlot
+          ? replaceIngredient(ingredient, dairyAlternative(ingredient.name, meal.type))
+          : ingredient);
+    refreshMealCopy(meal, preferences.fruitPreference);
+  });
+  if (meatSlot === "Breakfast") ensureMealMeat(meals, weekday, meatSlot);
+  if (dairySlot) ensureMealDairy(meals, dairySlot);
+  meals.forEach(refreshMealEstimates);
   // Preserve the legacy order exactly when no active ingredient decisions exist.
   // With decisions, the budget fitter must price the chosen final ingredients.
   if (Object.values(preferences.ingredientBanChoices ?? {}).some((choice) =>
@@ -669,7 +666,8 @@ function applyPlanStyle(
   if (preferences.planStyle === "batchCooking") {
     const options = {
       bannedIngredients: preferences.bannedIngredients,
-      meatWeekdays: getWeeklyAssignmentDays(preferences.meatPerWeek),
+      meatFrequency: preferences.meatPerWeek,
+      mealsPerDay: preferences.mealsPerDay,
       budgetTight: isWeeklyBudgetTight(meals, preferences.weeklyBudget, countryCode, goal),
       plantOnly: false
     };
@@ -1025,10 +1023,10 @@ function isReplacementAllowed(name: string, meal: Meal, preferences: MealPrefere
   const parts = occurrenceDate?.split("-").map(Number);
   const day = date ?? (parts?.length === 3 ? new Date(parts[0], parts[1] - 1, parts[2]) : undefined);
   const weekday = day ? (day.getDay() + 6) % 7 : undefined;
-  if (isMeat(name) && (meal.type !== "Dinner" || preferences.meatPerWeek === 0 ||
-    (weekday !== undefined && !getWeeklyAssignmentDays(preferences.meatPerWeek).includes(weekday)))) return false;
-  if (isDairy(name) && (meal.type !== "Breakfast" || preferences.dairyPerWeek === 0 ||
-    (!meal.isTypicalBreakfast && weekday !== undefined && !getWeeklyAssignmentDays(preferences.dairyPerWeek).includes(weekday)))) return false;
+  if (isMeat(name) && (preferences.meatPerWeek === 0 || (weekday !== undefined &&
+    meal.type !== getWeeklyFoodMealType(weekday, preferences.meatPerWeek, preferences.mealsPerDay, "meat")))) return false;
+  if (isDairy(name) && (preferences.dairyPerWeek === 0 || (weekday !== undefined &&
+    meal.type !== getWeeklyFoodMealType(weekday, preferences.dairyPerWeek, preferences.mealsPerDay, "dairy")))) return false;
   return !(isFruit(name) && preferences.fruitPreference === "avoid");
 }
 
@@ -1215,8 +1213,8 @@ function dairyAlternative(name: string, mealType: MealType): string {
   return "Olive oil";
 }
 
-function ensureDinnerMeat(meals: Meal[], weekday: number): void {
-  const dinner = meals.find((meal) => meal.type === "Dinner");
+function ensureMealMeat(meals: Meal[], weekday: number, type: MealType): void {
+  const dinner = meals.find((meal) => meal.type === type);
   if (!dinner) return;
   const previousTitle = dinner.title;
   const proteinIndex = dinner.ingredients.findIndex((ingredient) =>
@@ -1334,8 +1332,8 @@ function refreshMealCopy(meal: Meal, fruitPreference: MealPreferences["fruitPref
   }
 }
 
-function ensureBreakfastDairy(meals: Meal[]): void {
-  const breakfast = meals.find((meal) => meal.type === "Breakfast");
+function ensureMealDairy(meals: Meal[], type: MealType): void {
+  const breakfast = meals.find((meal) => meal.type === type);
   if (!breakfast || breakfast.ingredients.some((ingredient) => isDairy(ingredient.name))) return;
   breakfast.ingredients.push({
     name: "Plain yogurt",
@@ -1346,7 +1344,7 @@ function ensureBreakfastDairy(meals: Meal[]): void {
     proteinGrams: 3.5,
     estimatedCostCents: 18
   });
-  breakfast.title = `Yogurt with ${breakfast.title.toLowerCase()}`;
+  breakfast.title = type === "Breakfast" ? `Yogurt with ${breakfast.title.toLowerCase()}` : `${breakfast.title} with yogurt`;
   breakfast.description = appendDescription(breakfast.description, "plain yogurt");
 }
 

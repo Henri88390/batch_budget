@@ -1,4 +1,5 @@
-import type { Meal, MealBatch, MealIngredient } from "./models";
+import type { Meal, MealBatch, MealIngredient, WeeklyFrequency } from "./models";
+import { getWeeklyFoodMealType } from "./weeklyFoods";
 import { estimateIngredient } from "./ingredientEstimates";
 import { isIngredientBanned } from "./ingredientCatalog";
 
@@ -200,8 +201,8 @@ function formatDateKeyLocal(date: Date): string {
 
 export type BatchCookingOptions = {
   bannedIngredients: string[];
-  /** Weekdays (0 = Monday) on which the dinner should contain meat/fish. */
-  meatWeekdays: number[];
+  meatFrequency: WeeklyFrequency;
+  mealsPerDay: number;
   budgetTight: boolean;
   /** Drop animal protein entirely when even the cheapest meat would break the budget. */
   plantOnly?: boolean;
@@ -227,7 +228,8 @@ export function applyBatchCooking(meals: Meal[], date: Date, options: BatchCooki
   const carbB = pick(carbOptions, seed + 1, (option) => allowed(option.name) && option !== carbA) ?? carbA;
   const carbs = [carbA, carbB];
   const animalPool = options.budgetTight ? budgetAnimalProteinOptions : animalProteinOptions;
-  const animal = !options.plantOnly && options.meatWeekdays.some((weekday) => batchWeekdays.includes(weekday))
+  const meatSlot = (weekday: number) => getWeeklyFoodMealType(weekday, options.meatFrequency, options.mealsPerDay, "meat");
+  const animal = !options.plantOnly && batchWeekdays.some((weekday) => meatSlot(weekday) === "Lunch" || meatSlot(weekday) === "Dinner")
     ? pick(animalPool, seed + 1, (option) => allowed(option.name))
     : undefined;
   const legumeA = pick(legumeOptions, seed + 2, (option) => allowed(option.name));
@@ -240,10 +242,10 @@ export function applyBatchCooking(meals: Meal[], date: Date, options: BatchCooki
   );
 
   const weekday = weekdayIndex(date);
-  const isMeatDinnerDay = animal !== undefined && options.meatWeekdays.includes(weekday);
+  const selectedMeatSlot = animal !== undefined ? meatSlot(weekday) : undefined;
   const hasLunch = meals.some((meal) => meal.type === "Lunch");
   const batchUsesLegume = legumeA !== undefined && (
-    hasLunch || batchWeekdays.some((day) => !(animal !== undefined && options.meatWeekdays.includes(day)))
+    hasLunch || batchWeekdays.some((day) => !(animal !== undefined && meatSlot(day) === "Dinner"))
   );
 
   const components = [...new Set([
@@ -261,7 +263,7 @@ export function applyBatchCooking(meals: Meal[], date: Date, options: BatchCooki
     const mealNumber = dayIndex * targets.length + targetIndex;
     const carb = carbs[(dayIndex + targetIndex) % 2];
     const legume = legumes[Math.floor(mealNumber / 2) % 2];
-    const protein = meal.type === "Dinner" && isMeatDinnerDay ? animal : legume;
+    const protein = meal.type === selectedMeatSlot ? animal : legume;
     const slot = meal.type === "Lunch" ? 0 : 1;
     const seasoning = pick(seasonings, dayIndex * 2 + slot + seed, (option) => allowed(option.name));
     const portions = [

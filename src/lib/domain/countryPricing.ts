@@ -29,7 +29,25 @@ export const countries: CountryOption[] = [
   { code: "AU", name: "Australia", locale: "en-AU", currencyCode: "AUD", modeledPriceFactor: 1.7 }
 ];
 
-export const DEFAULT_COUNTRY: CountryCode = "DE";
+export const DEFAULT_COUNTRY: CountryCode = "FR";
+
+export function getLocaleCountry(locales: readonly string[]): CountryCode {
+  const preferences = locales.map((locale) => {
+    const parts = locale.toLowerCase().split("-");
+    const extension = parts.findIndex((part) => part.length === 1);
+    const region = parts.slice(1, extension < 0 ? undefined : extension).find((part) => /^[a-z]{2}$/.test(part));
+    return { language: parts[0], region: region?.toUpperCase() };
+  });
+  for (const preference of preferences) {
+    const country = countries.find((option) => option.code === preference.region);
+    if (country) return country.code;
+  }
+  for (const preference of preferences) {
+    const country = countries.find((option) => option.locale.split("-")[0] === preference.language);
+    if (country) return country.code;
+  }
+  return DEFAULT_COUNTRY;
+}
 
 export function getCountry(code: CountryCode): CountryOption {
   return countries.find((country) => country.code === code) ?? countries[0];

@@ -25,7 +25,7 @@ function refreshDate() {
 function initialize() {
   if (initialized) return;
   initialized = true;
-  let data = defaultState();
+  let data = defaultState(navigator.languages.length ? navigator.languages : [navigator.language]);
   let error: string | null = null;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);

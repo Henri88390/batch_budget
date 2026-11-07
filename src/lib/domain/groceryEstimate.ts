@@ -260,7 +260,7 @@ export type BatchPrep = {
   /** Date key of the prep day. */
   startDate: string;
   days: number;
-  /** Components with total raw quantities for the whole batch. */
+  /** Components and seasonings with total raw quantities for the whole batch. */
   items: BatchPrepItem[];
 };
 
@@ -299,7 +299,7 @@ export function getBatchPrep(
   const days = dates.length;
   const totals = new Map<string, BatchPrepItem>();
   batchMeals.forEach((meal) => meal.ingredients
-    .filter((ingredient) => components.includes(ingredient.name))
+    .filter((ingredient) => components.includes(ingredient.name) || ingredient.category === "seasoning")
     .forEach((ingredient) => {
       const amount = getIngredientAggregationAmount(ingredient.name, ingredient.quantity, ingredient.unit);
       const key = `${ingredient.name}|${amount.unit}`;
@@ -309,6 +309,10 @@ export function getBatchPrep(
     }));
   const items = [...totals.values()]
     .map((item) => ({ ...item, ...toShoppingUnit(item.quantity, item.unit), name: item.name }))
-    .sort((a, b) => components.indexOf(a.name) - components.indexOf(b.name));
+    .sort((a, b) => {
+      const aIndex = components.indexOf(a.name);
+      const bIndex = components.indexOf(b.name);
+      return (aIndex < 0 ? components.length : aIndex) - (bIndex < 0 ? components.length : bIndex);
+    });
   return { startDate, days, items };
 }

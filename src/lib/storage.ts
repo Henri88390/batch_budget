@@ -1,4 +1,4 @@
-import { countries, type CountryCode } from "./domain/countryPricing";
+import { countries, getLocaleCountry, type CountryCode } from "./domain/countryPricing";
 import { ingredientCatalog } from "./domain/ingredientCatalog";
 import { isValidPositiveIngredientQuantity } from "./domain/ingredientEstimates";
 import type { MealPreferences, TypicalBreakfast } from "./domain/models";
@@ -16,7 +16,7 @@ export type SavedState = {
   cooked: string[];
 };
 
-export function defaultState(): SavedState {
+export function defaultState(locales: readonly string[] = []): SavedState {
   return {
     version: 1,
     preferences: {
@@ -25,7 +25,7 @@ export function defaultState(): SavedState {
       bannedIngredients: [], bannedMeals: [], mealSubstitutes: {},
       mealOccurrenceOverrides: {}, typicalBreakfast: { mode: "none" },
     },
-    country: "DE", goals: {}, checked: [], cooked: [],
+    country: getLocaleCountry(locales), goals: {}, checked: [], cooked: [],
   };
 }
 
